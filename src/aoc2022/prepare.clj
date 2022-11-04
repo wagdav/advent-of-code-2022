@@ -72,4 +72,4 @@
   (print (src-str 2022 1))
   (print (test-str 2022 5))
   (take 3 (make-project 2022))
-  (write-project (make-project 2022) "/home/dwagner/projects/clojure/aoc2022"))
+  (write-project (make-project 2022) "/Users/david.wagner/x/advent-of-code-2022"))
