@@ -6,31 +6,34 @@
   (format "aoc%04d.day%02d" year day))
 
 (def src-template
-  "(ns %s
-  (:require [clojure.string :as str]))
-
-(defn parse-input [input])
-
-(defn solve-part1 [input])
-
-(defn solve-part2 [input])\n")
+  (str
+    "(ns %s\n"
+    "  (:require [clojure.string :as str]))\n"
+    "\n"
+    "(defn parse-input [input])\n"
+    "\n"
+    "(defn solve-part1 [input])\n"
+    "\n"
+    "(defn solve-part2 [input])\n"))
 
 (def test-template
-  "(ns %s-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [%s :refer [parse-input solve-part1 solve-part2]]))
-
-(def example-input \"\")
-
-(deftest works
-  (testing \"with example input\"
-    (is (= nil (solve-part1 example-input)))
-    (is (= nil (solve-part2 example-input))))
-
-  (testing \"with real input\"
-    (let [input (parse-input \"day%02d.txt\")]
-      (is (= nil (solve-part1 input)))
-      (is (= nil (solve-part2 input))))))\n")
+  (str
+    "(ns %s-test\n"
+    "  (:require [clojure.test :refer [deftest is testing]]\n"
+    "            [%s :refer [parse-input solve-part1 solve-part2]]\n"
+    "            [clojure.java.io :as io]))\n"
+    "\n"
+    "(def example-input \"\")\n"
+    "\n"
+    "(deftest works\n"
+    "  (testing \"with example input\")\n"
+    "    (is (nil? (solve-part1 example-input)))\n"
+    "    (is (nil? (solve-part2 example-input)))\n"
+    "\n"
+    "  (testing \"with real input\")\n"
+    "    (let [input (parse-input (slurp (io/resource \"day%02d.txt\")))]\n"
+    "      (is (nil? (solve-part1 input)))\n"
+    "      (is (nil? (solve-part2 input)))))\n"))
 
 (defn src-str [year day]
   (format src-template (aoc-namespace year day)))
