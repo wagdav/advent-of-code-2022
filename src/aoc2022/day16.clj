@@ -1,7 +1,9 @@
 (ns aoc2022.day16
   (:require [clojure.string :as str]))
 
-(defn parse-input [input])
+(defn parse-input [input]
+  (->> (re-seq #"-?\d+" input)
+  (mapv #(Integer/parseInt %))))
 
 (defn solve-part1 [input])
 
