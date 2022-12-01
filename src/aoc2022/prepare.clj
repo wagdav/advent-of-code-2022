@@ -12,7 +12,7 @@
     "\n"
     "(defn parse-input [input]\n"
     "  (->> (re-seq #\"-?\\d+\" input)\n"
-    "  (mapv #(Integer/parseInt %%))))\n"
+    "    (mapv #(Integer/parseInt %%))))\n"
     "\n"
     "(defn solve-part1 [input])\n"
     "\n"
