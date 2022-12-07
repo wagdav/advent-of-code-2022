@@ -28,7 +28,7 @@
     (update to into (reverse (take amount (crates from))))))
 
 (defn code [crates]
-  (apply str
+  (str/join
     (for [i (range 1 (inc (count crates)))]
       (first (crates i)))))
 

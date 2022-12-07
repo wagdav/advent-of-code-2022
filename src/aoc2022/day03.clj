@@ -19,7 +19,7 @@
          (map
            (fn [line] (->> line
                            (split-at (quot (count line) 2))
-                           (map #(into #{} %))
+                           (map set)
                            (apply set/intersection)
                            (first)
                            (priority)))
@@ -27,7 +27,7 @@
 
 (defn solve-part2 [input]
   (->> input
-       (map #(into #{} %))
+       (map set)
        (partition 3)
        (map #(first (apply set/intersection %)))
        (map priority)

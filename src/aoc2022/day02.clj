@@ -1,8 +1,7 @@
 (ns aoc2022.day02)
 
 (defn parse-input [input]
-  (->> (re-seq #"[A-Z]" input)
-       (partition 2)))
+  (partition 2 (re-seq #"[A-Z]" input)))
 
 (def code->move {"A" :rock "B" :paper "C" :scissors
                  "X" :rock "Y" :paper "Z" :scissors})
