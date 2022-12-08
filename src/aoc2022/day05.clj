@@ -29,7 +29,7 @@
 
 (defn code [crates]
   (str/join
-    (for [i (range 1 (inc (count crates)))]
+    (for [i (sort (keys crates))]
       (first (crates i)))))
 
 (defn solve-part1 [{:keys [crates procedure]}]
