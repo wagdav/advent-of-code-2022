@@ -7,7 +7,7 @@
 (defn parse-input [input]
   (let [[crate-block instr-block] (str/split input #"\R\R")]
     {:crates (zipmap
-               (range 1 10)
+               (iterate inc 1)
                (->> (str/split-lines crate-block)
                     (map (fn [line] (->> line (drop 1) (partition 1 4) flatten)))
                     (butlast)
