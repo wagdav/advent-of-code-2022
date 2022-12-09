@@ -6,15 +6,12 @@
        (mapv #(str/split % #" "))
        (mapv (fn [[d n]] [d (Integer/parseInt n)]))))
 
-(defn expand-move [[row col] [dir amount]]
+(def directions {"U" [1 0], "D" [-1 0], "L" [0 -1], "R" [0 1]})
+
+(defn expand-move [start [dir amount]]
   (reductions
-    (fn [[r c] d]
-      (case d
-        "U" [(inc r)     c]
-        "D" [(dec r)     c]
-        "L" [     r (dec c)]
-        "R" [     r (inc c)]))
-    [row col]
+    #(mapv + %1 (directions %2))
+    start
     (repeat amount dir)))
 
 (defn one-step [x]
