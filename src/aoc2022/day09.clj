@@ -21,8 +21,7 @@
   (let [delta (map - head tail)]
     (if (every? #(<= % 1) (map abs delta))
       tail
-      [(+ (first tail)  (one-step (first delta)))
-       (+ (second tail) (one-step (second delta)))])))
+      (mapv + tail (map one-step delta)))))
 
 (defn move [{:keys [knots visited]} m]
   (let [new-knots (reductions
