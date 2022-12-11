@@ -15,9 +15,9 @@
           "Operation"
           (assoc out :op (let [[op arg] (drop 3 (str/split content #" "))
                                op-fn ({"*" * "+" +} op)]
-                           (if (= arg "old")
-                             (fn [old] (op-fn old old))
-                             (fn [old] (op-fn old (Integer/parseInt arg))))))
+                           (fn [old] (op-fn old (if (= arg "old")
+                                                  old
+                                                  (Integer/parseInt arg))))))
           "Test"
           (assoc out :divisible-by (parse-int content))
           "If true"
@@ -33,44 +33,40 @@
 (defn parse-input [input]
   (mapv parse-block (str/split input #"\R\R")))
 
-(defn inspect [{:keys [index op divisible-by if-true if-false]} state item]
-  (let [level (quot (op item) 3)
-        divisible? (zero? (rem level divisible-by))]
-    (cond-> state
-      true              (update-in [index :items] #(vec (drop 1 %)))
-      true              (update-in [index :inspected] (fnil inc 0))
-      divisible?        (update-in [if-true :items] conj level)
-      (not divisible?)  (update-in [if-false :items] conj level))))
+(defn inspect [{:keys [index op divisible-by if-true if-false]} fun state item]
+  (let [level (fun (op item))
+        to-index (if (zero? (rem level divisible-by))
+                     if-true
+                     if-false)]
+    (-> state
+      (update-in [index :inspected] (fnil inc 0))
+      (update-in [index :items] #(vec (drop 1 %)))
+      (update-in [to-index :items] conj level))))
 
-(defn turn [state i]
+(defn turn [fun state i]
   (let [monkey (get state i)]
-    (reduce (partial inspect monkey)
+    (reduce (partial inspect monkey fun)
             state
             (monkey :items))))
 
-(defn round [state]
+(defn round [fun state]
   (reduce
-    turn
+    (partial turn fun)
     state
     (range (count state))))
 
+(defn simulate [input num-turns fun]
+  (nth (iterate (partial round fun) input) num-turns))
+
+(defn monkey-business [state]
+   (->> (map :inspected state)
+        (sort >)
+        (take 2)
+        (apply *)))
+
 (defn solve-part1 [input]
-  (->> (nth (iterate round input) 20)
-       (map :inspected)
-       (sort >)
-       (take 2)
-       (apply *)))
+  (monkey-business (simulate input 20 #(quot % 3))))
 
-(defn solve-part2 [input])
-
-(comment
-  (inspect {:index 0 :op inc :divisible-by 3 :if-true 0 :if-false 1}
-           [{:index 0 :items [2 3 4]}]
-           15)
-
-  (->> (parse-input aoc2022.day11-test/example)
-       (iterate round)
-       (take (inc 20)))
-
-
-  (solve-part1 (parse-input aoc2022.day11-test/example)))
+(defn solve-part2 [input]
+  (let [n (apply * (map :divisible-by input))]
+    (monkey-business (simulate input 10000 #(mod % n)))))
