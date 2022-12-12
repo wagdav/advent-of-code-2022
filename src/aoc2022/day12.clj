@@ -56,9 +56,8 @@
 (defn solve-part2 [input]
   (let [s (find-start-stop input)
         end (s \E)]
-    (->>
-      (for [start (coordinates input)
-            :when (#{\a \S} (get-in input start))]
-        (shortest-path input start end))
-      (remove nil?)
-      (apply min))))
+    (->> (coordinates input)
+         (filter #(contains? #{\a \S} (get-in input %)))
+         (pmap #(shortest-path input % end))
+         (remove nil?)
+         (apply min))))
