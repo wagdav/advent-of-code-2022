@@ -18,7 +18,7 @@
       [chr pos])))
 
 (defn height [heightmap pos]
-  (when-let [c (get-in heightmap pos)]
+  (when-let [^Character c (get-in heightmap pos)]
     (case c
       \S (int \a)
       \E (int \z)
