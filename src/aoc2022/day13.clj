@@ -20,11 +20,9 @@
       (recur left [right]))
 
     (and (seq left) (seq right))
-    (loop [l (first left)
-           r (first right)]
-      (if-some [res (correct? l r)]
-        res
-        (correct? (rest left) (rest right))))
+    (if-some [res (correct? (first left) (first right))]
+      res
+      (recur (rest left) (rest right)))
 
     (and (empty? left) (empty? right))
     nil
