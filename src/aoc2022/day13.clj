@@ -3,7 +3,7 @@
 
 (defn parse-input [input]
   (->> (str/split-lines input)
-       (remove #(= "" %))
+       (remove empty?)
        (map read-string)))
 
 (defn correct? [left right]
