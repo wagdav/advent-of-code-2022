@@ -36,7 +36,7 @@
                        1))]
     dir))
 
-(defn shortest-path [heightmap climbing start goal?]
+(defn shortest-climb [heightmap climbing start goal?]
   (:path-cost
     (search/uniform-cost
       (reify search/Problem
@@ -53,8 +53,8 @@
 
 (defn solve-part1 [input]
   (let [s (find-start-stop input)]
-    (shortest-path input :up (s \S) #(= % (s \E)))))
+    (shortest-climb input :up (s \S) #(= % (s \E)))))
 
 (defn solve-part2 [input]
   (let [s (find-start-stop input)]
-    (shortest-path input :down (s \E) #(contains? #{\a \S} (get-in input %)))))
+    (shortest-climb input :down (s \E) #(contains? #{\a \S} (get-in input %)))))
