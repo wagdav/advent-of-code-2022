@@ -44,3 +44,23 @@
                (->> (actions problem state)
                     (map (partial child-node problem node))
                     (remove #(explored (:state %)))))))))))
+
+(defn breadth-first [problem]
+  (let [start (initial-state problem)]
+    (loop [explored #{}
+           frontier (conj (clojure.lang.PersistentQueue/EMPTY)
+                      (map->Node {:state start :actions [] :path [start] :path-cost 0}))]
+      (let [node (peek frontier)]
+        (cond
+          (empty? frontier) ; no solution
+          nil
+
+          (goal? problem (:state node))
+          (dissoc node :state)
+
+          :else
+          (recur
+            (conj explored (:state node))
+            (reduce conj (pop frontier) (->> (actions problem (:state node))
+                                             (map (partial child-node problem node))
+                                             (remove #(explored (:state %)))))))))))
