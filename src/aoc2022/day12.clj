@@ -27,21 +27,23 @@
 (defn move [pos direction]
   (mapv + pos direction))
 
-(defn moves [m from]
+(defn moves [m from climbing]
   (for [dir [[0 1] [0 -1] [1 0] [-1 0]]
         :let [to (move from dir)]
         :when (and (height m to)
-                   (<= (- (height m to) (height m from)) 1))]
+                   (<= (* ({:up 1 :down -1} climbing)
+                          (- (height m to) (height m from)))
+                       1))]
     dir))
 
-(defn shortest-path [heightmap start end]
+(defn shortest-path [heightmap climbing start goal?]
   (:path-cost
     (search/uniform-cost
       (reify search/Problem
         (actions [_ state]
-          (moves heightmap state))
+          (moves heightmap state climbing))
         (goal? [_ state]
-          (= state end))
+          (goal? state))
         (initial-state [_]
           start)
         (result [_ state action]
@@ -51,13 +53,8 @@
 
 (defn solve-part1 [input]
   (let [s (find-start-stop input)]
-    (shortest-path input (s \S) (s \E))))
+    (shortest-path input :up (s \S) #(= % (s \E)))))
 
 (defn solve-part2 [input]
-  (let [s (find-start-stop input)
-        end (s \E)]
-    (->> (coordinates input)
-         (filter #(contains? #{\a \S} (get-in input %)))
-         (pmap #(shortest-path input % end))
-         (remove nil?)
-         (apply min))))
+  (let [s (find-start-stop input)]
+    (shortest-path input :down (s \E) #(contains? #{\a \S} (get-in input %)))))
