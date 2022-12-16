@@ -31,12 +31,10 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn actions [{:keys [caves open? position]}]
   (let [cs (second (caves position))]
-    (cond-> []
-            ; open valve, if it makes sense and not yet opened
+    (cond-> (into (for [c cs :when (not= c position)] [:walk c]))
+            ;open valve, if it makes sense and not yet opened
             (and (pos? (rate-of caves position)) (nil? (open? position)))
-            (conj [:open-valve position])
-
-            true (into (for [c cs :when (not= c position)] [:walk c]))))) ; walk around
+            (conj [:open-valve position]))))
 
 (defn result [state [todo valve]]
   (case todo
@@ -59,19 +57,26 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   pressure)
 
 (defn search [state]
-  (loop [d 0
-         visited #{}
-         queue (conj clojure.lang.PersistentQueue/EMPTY state)
+  (loop [visited #{}
+         stack [state]
          best state]
-    (let [state (peek queue)]
-      (if (goal? state)
-        state
-        (recur (inc d)
-               (conj visited state)
-               (into (pop queue) (max-key utility
-                                     (remove visited
-                                             (for [a (actions state)] (result state a)))))
-               (max-key utility best state))))))
+    (let [state (peek stack)]
+      (cond
+        (empty? stack)
+        best
+
+        (goal? state)
+        (recur (conj visited state)
+               (pop stack)
+               (max-key utility best state))
+
+        :otherwise
+        (recur (conj visited state)
+               (if (< (utility state) (utility best))
+                 (pop stack)
+                 (into (pop stack) (->> (for [a (actions state)] (result state a))
+                                        (remove visited))))
+               best)))))
 
 (defn initial-state [caves]
   {:caves caves
@@ -81,9 +86,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
    :open? #{}})
 
 (defn solve-part1 [caves]
-  (search (initial-state caves)))
+  (:pressure (search (initial-state caves))))
 
 (comment
   (result (initial-state caves) [:walk "BB"])
-  (solve-part1 caves)) ; should be 1651
+  (assert (= 1651 (solve-part1 caves)))) ; should be 1651
 (defn solve-part2 [input])
