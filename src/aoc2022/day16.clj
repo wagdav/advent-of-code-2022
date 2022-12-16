@@ -38,25 +38,31 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
          :open? #{}})
       (result [_ {:keys [position remaining pressure] :as state} action]
         (open-valve caves state action))
-      (step-cost [this {:keys [open?] :as state} action]
-        (let [c (- (:pressure state)
-                   (:pressure (search/result this state action)))]
-          c)))))
+      (step-cost [this state action]
+        (- (:pressure state))))))
+
+(defn rate-of [caves valve]
+  (first (caves valve)))
+
+(defn total-rate [caves {:keys [remaining open?]}]
+    (* remaining (apply + (for [v open?] (rate-of caves v)))))
 
 (defn open-valve [caves {:keys [position open? remaining pressure] :as state} [todo valve]]
   (let [time-spent (case todo
                      :open-valve 2
                      :walk 1)
         open-valves (if (= todo :open-valve) (conj open? valve) open?)
-        flow (* time-spent (apply + (for [v open-valves] (first (caves v)))))]
+        flow (if (= todo :open-valve)
+               (* (- remaining time-spent) (first (caves valve)))
+               0)]
     (-> state
       (assoc :open? open-valves)
-      (update :pressure #(+ % flow))
       (assoc :position valve)
+      (update :pressure #(+ % flow))
       (update :remaining #(- % time-spent)))))
 
-(open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:open-valve "BB"])
+(potential-flow caves (open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:open-valve "BB"]))
 (open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:walk "BB"])
-(open-valve caves {:position "BB" :remaining 28 :open? #{"BB"} :pressure 364} [:open-valve "CC"])
+(potential-flow caves (open-valve caves {:position "BB" :remaining 28 :open? #{"BB"} :pressure 0} [:open-valve "CC"]))
 (solve-part1 caves) ; should be 1651
 (defn solve-part2 [input])
