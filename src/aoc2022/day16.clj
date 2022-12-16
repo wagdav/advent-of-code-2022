@@ -25,28 +25,31 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (search/uniform-cost
     (reify search/Problem
       (actions [_ {:keys [position] :as state}]
-        (second (caves position)))
+        (caves position))
       (goal? [_ {:keys [remaining position]}]
         (<= remaining 0))
       (initial-state [_]
         {:position "AA"
          :remaining 30
-         :pressure 0})
+         :pressure 0
+         :open? #{}})
       (result [_ {:keys [position remaining pressure] :as state} action]
         (open-valve caves state action))
       (step-cost [this state action]
-        1))))
+        (- (:pressure state)
+           (:pressure (search/result this state action)))))))
 
 (defn open-valve [caves {:keys [position remaining pressure] :as state} valve]
   (let [rate (first (caves valve))
         time-spent (inc (if (zero? rate) 0 1))
         flow (* rate (- remaining time-spent))]
     (-> state
+      (update :open? conj valve)
       (assoc :position valve)
       (update :pressure #(+ % flow))
       (update :remaining #(- % time-spent)))))
 
-(open-valve caves {:position "AA" :remaining 30 :pressure 0} "BB")
-(open-valve caves {:position "BB" :remaining 28 :pressure 364} "CC")
+(open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} "BB")
+(open-valve caves {:position "BB" :remaining 28 :open? #{"BB"} :pressure 364} "CC")
 (solve-part1 caves)
 (defn solve-part2 [input])
