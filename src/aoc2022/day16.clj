@@ -49,10 +49,10 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
     (reify search/Problem
       (actions [_ {:keys [open? position]}]
         (let [cs (second (caves position))]
-          (cond-> (for [c cs :when (not= c position)] [:walk c])
+          (cond-> (for [c cs :when (not= c position)] [:walk c]) ; walk around
 
-                  (and (pos? (rate-of caves position))
-                       (nil? (open? position)))
+                  ; open valve, if it makes sense and not yet opened
+                  (and (pos? (rate-of caves position)) (nil? (open? position)))
                   (conj [:open-valve position]))))
       (goal? [_ {:keys [remaining]}]
         (= 0 remaining))
@@ -65,7 +65,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (result caves state action))
       (step-cost [this state action]
         (let [n (search/result this state action)]
-          (* -1 (:remaining n) (total-rate n caves)))))))
+          (* -1 (n :remaining) (total-rate n caves)))))))
 
 (total-rate {:open? #{"BB"}} caves)
 (result caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:walk "BB"])
