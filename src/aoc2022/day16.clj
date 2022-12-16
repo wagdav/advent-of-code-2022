@@ -31,11 +31,12 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn actions [{:keys [caves open? position]}]
   (let [cs (second (caves position))]
-    (cond-> (for [c cs :when (not= c position)] [:walk c]) ; walk around
-
+    (cond-> []
             ; open valve, if it makes sense and not yet opened
             (and (pos? (rate-of caves position)) (nil? (open? position)))
-            (conj [:open-valve position]))))
+            (conj [:open-valve position])
+
+            true (into (for [c cs :when (not= c position)] [:walk c]))))) ; walk around
 
 (defn result [state [todo valve]]
   (case todo
@@ -58,9 +59,19 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   pressure)
 
 (defn search [state]
-  (if (goal? state)
-    (utility state)
-    (apply max (for [a (actions state)] (search (result state a))))))
+  (loop [d 0
+         visited #{}
+         queue (conj clojure.lang.PersistentQueue/EMPTY state)
+         best state]
+    (let [state (peek queue)]
+      (if (goal? state)
+        state
+        (recur (inc d)
+               (conj visited state)
+               (into (pop queue) (max-key utility
+                                     (remove visited
+                                             (for [a (actions state)] (result state a)))))
+               (max-key utility best state))))))
 
 (defn initial-state [caves]
   {:caves caves
@@ -72,7 +83,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn solve-part1 [caves]
   (search (initial-state caves)))
 
-(result (initial-state caves) [:walk "BB"])
-#_(solve-part1 caves) ; should be 1651
-
+(comment
+  (result (initial-state caves) [:walk "BB"])
+  (solve-part1 caves)) ; should be 1651
 (defn solve-part2 [input])
