@@ -21,34 +21,16 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (def caves (parse-input example))
 
-(defn solve-part1 [caves]
-  (search/uniform-cost
-    (reify search/Problem
-      (actions [_ {:keys [open? position] :as state}]
-        (let [cs (second (caves position))]
-          (concat
-            (for [c cs :when (and (pos? (rate-of caves c)) (not (open? c)))] [:open-valve c])
-            (for [c cs] [:walk c]))))
-      (goal? [_ {:keys [remaining position]}]
-        (>= 0 remaining))
-      (initial-state [_]
-        {:position "AA"
-         :remaining 30
-         :pressure 0
-         :open? #{}})
-      (result [_ {:keys [position remaining pressure] :as state} action]
-        (open-valve caves state action))
-      (step-cost [this state action]
-        (let [{:keys [remaining open?]} (search/result this state action)]
-          (* -1 remaining (apply + (for [v open?] (rate-of caves v)))))))))
-
 (defn rate-of [caves valve]
   (first (caves valve)))
 
-(defn release-pressure [{:keys [open?] :as state} caves]
-  (update state :pressure #(apply +  % (for [c open?] (rate-of caves c)))))
+(defn total-rate [{:keys [open?]} caves]
+  (apply + (for [c open?] (rate-of caves c))))
 
-(defn open-valve [caves {:keys [position open? remaining pressure] :as state} [todo valve]]
+(defn release-pressure [state caves]
+  (update state :pressure #(+ % (total-rate state caves))))
+
+(defn result [caves state [todo valve]]
   (case todo
     :walk
     (-> state
@@ -62,8 +44,31 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
       (update :open? conj valve)
       (update :remaining dec))))
 
-(open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:open-valve "BB"])
-(open-valve caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:walk "BB"])
-(open-valve caves {:position "BB" :remaining 28 :open? #{"BB"} :pressure 0} [:open-valve "CC"])
+(defn solve-part1 [caves]
+  (search/uniform-cost
+    (reify search/Problem
+      (actions [_ {:keys [open? position]}]
+        (let [cs (second (caves position))]
+          (cond-> (for [c cs :when (not= c position)] [:walk c])
+
+                  (and (pos? (rate-of caves position))
+                       (nil? (open? position)))
+                  (conj [:open-valve position]))))
+      (goal? [_ {:keys [remaining]}]
+        (= 0 remaining))
+      (initial-state [_]
+        {:position "AA"
+         :remaining 30
+         :pressure 0
+         :open? #{}})
+      (result [_ state action]
+        (result caves state action))
+      (step-cost [this state action]
+        (let [n (search/result this state action)]
+          (* -1 (:remaining n) (total-rate n caves)))))))
+
+(total-rate {:open? #{"BB"}} caves)
+(result caves {:position "AA" :remaining 30 :open? #{} :pressure 0} [:walk "BB"])
+(result caves {:position "BB" :remaining 28 :open? #{"BB"} :pressure 0} [:open-valve "CC"])
 (solve-part1 caves) ; should be 1651
 (defn solve-part2 [input])
