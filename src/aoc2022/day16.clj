@@ -46,7 +46,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (first (caves valve)))
 
 (defn release-pressure [{:keys [open?] :as state} caves]
-  (update state :pressure #(apply +  % (for [v open?] (rate-of caves v)))))
+  (update state :pressure #(apply +  % (for [c open?] (rate-of caves c)))))
 
 (defn open-valve [caves {:keys [position open? remaining pressure] :as state} [todo valve]]
   (case todo
