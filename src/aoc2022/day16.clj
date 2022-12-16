@@ -38,8 +38,10 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
          :open? #{}})
       (result [_ {:keys [position remaining pressure] :as state} action]
         (open-valve caves state action))
-      (step-cost [this state action]
-        (- (:pressure state))))))
+      (step-cost [this {:keys [remaining]} [todo v]]
+        (if (= todo :open-valve)
+          (- (* (+ remaining 2) (rate-of caves v)))
+          0)))))
 
 (defn rate-of [caves valve]
   (first (caves valve)))
