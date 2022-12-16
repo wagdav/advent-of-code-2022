@@ -26,7 +26,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn total-rate [{:keys [caves open?]}]
   (apply + (for [c open?] (rate-of caves c))))
 
-(defn release-pressure [{:keys [caves] :as state}]
+(defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
 (defn actions [{:keys [caves open? position]}]
@@ -70,11 +70,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
    :open? #{}})
 
 (defn solve-part1 [caves]
-  (search caves initial-state))
+  (search (initial-state caves)))
 
-(total-rate {:open? #{"BB"}} caves)
 (result (initial-state caves) [:walk "BB"])
 #_(solve-part1 caves) ; should be 1651
 
 (defn solve-part2 [input])
-
