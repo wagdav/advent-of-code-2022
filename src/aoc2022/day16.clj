@@ -32,7 +32,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn actions [{:keys [caves open? position]}]
   (let [cs (second (caves position))]
     (cond-> (into (for [c cs :when (not= c position)] [:walk c]))
-            ;open valve, if it makes sense and not yet opened
             (and (pos? (rate-of caves position)) (nil? (open? position)))
             (conj [:open-valve position]))))
 
@@ -51,10 +50,18 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
       (update :remaining dec))))
 
 (defn goal? [{:keys [remaining]}]
-  (= 0 remaining))
+  (>= 0 remaining))
 
-(defn utility [{:keys [pressure]}]
+(defn projected-pressure [{:keys [remaining pressure caves] :as state}]
+  (let [max-rate (->> (vals caves) (map first) (apply +))]
+    (+ pressure
+       (* remaining max-rate))))
+
+(defn utility [{:keys [remaining pressure caves] :as state}]
   pressure)
+
+(defn worse-than? [best state]
+  (< (projected-pressure state) (utility best)))
 
 (defn search [state]
   (loop [visited #{}
@@ -65,17 +72,16 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (empty? stack)
         best
 
-        (goal? state)
+        (or (goal? state)
+            (worse-than? best state))
         (recur (conj visited state)
                (pop stack)
                (max-key utility best state))
 
         :otherwise
         (recur (conj visited state)
-               (if (< (utility state) (utility best))
-                 (pop stack)
-                 (into (pop stack) (->> (for [a (actions state)] (result state a))
-                                        (remove visited))))
+               (into (pop stack) (->> (for [a (actions state)] (result state a))
+                                      (remove visited)))
                best)))))
 
 (defn initial-state [caves]
@@ -90,5 +96,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (comment
   (result (initial-state caves) [:walk "BB"])
-  (assert (= 1651 (solve-part1 caves)))) ; should be 1651
+  (utility (initial-state caves))
+  (time (solve-part1 caves))) ; should be 1651
 (defn solve-part2 [input])
