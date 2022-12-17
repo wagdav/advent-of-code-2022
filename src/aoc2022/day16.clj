@@ -29,31 +29,45 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
-(defn actions [{:keys [caves open? me]}]
-  (for [a [:walk :open-valve]
-        c (second (caves me))
-        :when (and
-                (and (a :open-valve)
-                     (= me c)                  ; in the valve's cave
-                     (pos? (rate-of caves c))  ; makes sense to open
-                     (nil? (open? c)))         ; not open yet
-                (and (a :walk)
-                     (not= c me)))]
-    [a c])
+(defn player-actions [{:keys [cave open?] :as state} who]
+  (let [pos (state who)]
+    (for [a [:walk :open-valve]
+          c (into [pos] (second (caves pos)))
+          :when (or
+                  (and (= a :open-valve)
+                       (= pos c)                 ; in the valve's cave
+                       (pos? (rate-of caves c))  ; makes sense to open
+                       (nil? (open? c)))         ; not open yet
+                  (and (= a :walk)
+                       (not= c pos)))]
+      [a c])))
 
-  (let [cs (second (caves me))]
-    (reverse
-      (cond-> (for [c cs :when (not= c me)]
-                [[:walk c] [:walk c]])
+(defn actions [{:keys [caves open? me elephant] :as state}]
+  (if-not elephant
+    (for [p (player-actions state :me)]
+      p)
+    (for [[a1 c1 :as p1] (player-actions state :me)
+          [a2 c2 :as p2] (player-actions state :elephant)
+          :when (if-not (= a1 a2 :open-valve)    ; don't touch the same valve
+                  (not= c1 c2)
+                  true)]
+      [p1 p2])))
 
-              (and (pos? (rate-of caves me)) (nil? (open? me)))
-              (conj [[:open-valve me]])))))
+(caves "BB")
+(actions {:caves caves :open? #{} :me "BB" :elephant "BB"})
+(player-actions {:caves caves :open? #{} :me "BB" :elephant "CC"} :elephant)
 
-(defn result [state [a1 a2]]
-  (-> state
-      release-pressure
-      (move :me a1)
-      (update :remaining dec)))
+(defn result [{:keys [elephant] :as state} action]
+  (if-not elephant
+    (-> state
+        release-pressure
+        (move :me action)
+        (update :remaining dec))
+    (-> state
+        release-pressure
+        (move :me (first action))
+        (move :elephant (second action))
+        (update :remaining dec))))
 
 (defn move [state who [todo valve]]
   (case todo
@@ -112,6 +126,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (comment
   (result (initial-state caves) [:walk "BB"])
-  (actions (initial-state caves))
+  (actions (assoc (initial-state caves) :me "BB"))
   (time (solve-part1 caves)) ; should be 1651
   (time (solve-part2 caves))) ; should be 1707
