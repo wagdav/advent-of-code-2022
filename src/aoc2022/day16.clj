@@ -31,7 +31,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn actions [{:keys [caves open? position]}]
   (let [cs (second (caves position))]
-    (cond-> (into (for [c cs :when (not= c position)] [:walk c]))
+    (cond-> (for [c cs :when (not= c position)] [:walk c])
             (and (pos? (rate-of caves position)) (nil? (open? position)))
             (conj [:open-valve position]))))
 
