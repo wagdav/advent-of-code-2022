@@ -29,19 +29,19 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
-(defn actions [{:keys [caves open? position]}]
-  (let [cs (second (caves position))]
+(defn actions [{:keys [caves open? me]}]
+  (let [cs (second (caves me))]
     (reverse
-      (cond-> (for [c cs :when (not= c position)] [:walk c])
-              (and (pos? (rate-of caves position)) (nil? (open? position)))
-              (conj [:open-valve position])))))
+      (cond-> (for [c cs :when (not= c me)] [:walk c])
+              (and (pos? (rate-of caves me)) (nil? (open? me)))
+              (conj [:open-valve me])))))
 
 (defn result [state [todo valve]]
   (case todo
     :walk
     (-> state
       (release-pressure)
-      (assoc :position valve)
+      (assoc :me valve)
       (update :remaining dec))
 
     :open-valve
@@ -87,7 +87,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn initial-state [caves]
   {:caves caves
-   :position "AA"
+   :me "AA"
    :remaining 30
    :pressure 0
    :open? #{}})
