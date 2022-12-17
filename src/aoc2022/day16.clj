@@ -29,7 +29,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
-(defn player-actions [{:keys [open?] :as state} who]
+(defn player-actions [{:keys [caves open?] :as state} who]
   (let [pos (state who)]
     (for [a [:walk :open-valve]
           c (into [pos] (second (caves pos)))
@@ -52,10 +52,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                   (not= c1 c2)
                   true)]
       [p1 p2])))
-
-(caves "BB")
-(actions {:caves caves :open? #{} :me "BB" :elephant "BB"})
-(player-actions {:caves caves :open? #{} :me "BB" :elephant "CC"} :elephant)
 
 (defn move [state who [todo valve]]
   (case todo
