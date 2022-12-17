@@ -30,6 +30,17 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (update state :pressure #(+ % (total-rate state))))
 
 (defn actions [{:keys [caves open? me]}]
+  (for [a [:walk :open-valve]
+        c (second (caves me))
+        :when (and
+                (and (a :open-valve)
+                     (= me c)                  ; in the valve's cave
+                     (pos? (rate-of caves c))  ; makes sense to open
+                     (nil? (open? c)))         ; not open yet
+                (and (a :walk)
+                     (not= c me)))]
+    [a c])
+
   (let [cs (second (caves me))]
     (reverse
       (cond-> (for [c cs :when (not= c me)]
@@ -87,7 +98,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn initial-state [caves]
   {:caves caves
    :me "AA"
-   :elephant "AA"
    :remaining 30
    :pressure 0
    :open? #{}})
@@ -95,8 +105,13 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn solve-part1 [caves]
   (:pressure (search (initial-state caves))))
 
+(defn solve-part2 [caves]
+  (:pressure (search (-> (initial-state caves)
+                         (assoc :remaining 26)
+                         (assoc :elephant "AA")))))
+
 (comment
   (result (initial-state caves) [:walk "BB"])
-  (utility (initial-state caves))
-  (time (solve-part1 caves))) ; should be 1651
-(defn solve-part2 [input])
+  (actions (initial-state caves))
+  (time (solve-part1 caves)) ; should be 1651
+  (time (solve-part2 caves))) ; should be 1707
