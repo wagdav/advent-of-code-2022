@@ -32,23 +32,22 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn actions [{:keys [caves open? me]}]
   (let [cs (second (caves me))]
     (reverse
-      (cond-> (for [c cs :when (not= c me)] [:walk c])
+      (cond-> (for [c cs :when (not= c me)]
+                [[:walk c] [:walk c]])
+
               (and (pos? (rate-of caves me)) (nil? (open? me)))
-              (conj [:open-valve me])))))
+              (conj [[:open-valve me]])))))
 
-(defn result [state [todo valve]]
+(defn result [state [a1 a2]]
+  (-> state
+      release-pressure
+      (move :me a1)
+      (update :remaining dec)))
+
+(defn move [state who [todo valve]]
   (case todo
-    :walk
-    (-> state
-      (release-pressure)
-      (assoc :me valve)
-      (update :remaining dec))
-
-    :open-valve
-    (-> state
-      (release-pressure)
-      (update :open? conj valve)
-      (update :remaining dec))))
+    :walk       (assoc state who valve)
+    :open-valve (update state :open? conj valve)))
 
 (defn goal? [{:keys [remaining]}]
   (>= 0 remaining))
@@ -88,6 +87,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn initial-state [caves]
   {:caves caves
    :me "AA"
+   :elephant "AA"
    :remaining 30
    :pressure 0
    :open? #{}})
