@@ -29,7 +29,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
-(defn player-actions [{:keys [cave open?] :as state} who]
+(defn player-actions [{:keys [open?] :as state} who]
   (let [pos (state who)]
     (for [a [:walk :open-valve]
           c (into [pos] (second (caves pos)))
@@ -42,7 +42,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                        (not= c pos)))]
       [a c])))
 
-(defn actions [{:keys [caves open? me elephant] :as state}]
+(defn actions [{:keys [elephant] :as state}]
   (if-not elephant
     (for [p (player-actions state :me)]
       p)
@@ -57,6 +57,11 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (actions {:caves caves :open? #{} :me "BB" :elephant "BB"})
 (player-actions {:caves caves :open? #{} :me "BB" :elephant "CC"} :elephant)
 
+(defn move [state who [todo valve]]
+  (case todo
+    :walk       (assoc state who valve)
+    :open-valve (update state :open? conj valve)))
+
 (defn result [{:keys [elephant] :as state} action]
   (if-not elephant
     (-> state
@@ -69,20 +74,15 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (move :elephant (second action))
         (update :remaining dec))))
 
-(defn move [state who [todo valve]]
-  (case todo
-    :walk       (assoc state who valve)
-    :open-valve (update state :open? conj valve)))
-
 (defn goal? [{:keys [remaining]}]
   (>= 0 remaining))
 
-(defn projected-pressure [{:keys [remaining pressure caves] :as state}]
+(defn projected-pressure [{:keys [remaining pressure caves]}]
   (let [max-rate (->> (vals caves) (map first) (apply +))]
     (+ pressure
        (* remaining max-rate))))
 
-(defn utility [{:keys [remaining pressure caves] :as state}]
+(defn utility [{:keys [pressure]}]
   pressure)
 
 (defn worse-than? [best state]
@@ -103,7 +103,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                (pop stack)
                (max-key utility best state))
 
-        :otherwise
+        :else
         (recur (conj visited state)
                (into (pop stack) (->> (for [a (actions state)] (result state a))
                                       (remove visited)))
