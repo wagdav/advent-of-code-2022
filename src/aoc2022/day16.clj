@@ -95,7 +95,8 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
         (or (goal? state)
             (worse-than? best state))
-        (recur (conj visited state)
+        (recur (into visited [state (-> state (assoc :elephant (state :me)
+                                                     :me (state :elephant)))])
                (pop stack)
                (max-key utility best state))
 
@@ -104,6 +105,35 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                (into (pop stack) (->> (for [a (actions state)] (result state a))
                                       (remove visited)))
                best)))))
+
+(defn search-a* [start]
+  (search/uniform-cost
+    (reify search/Problem
+      (initial-state [_]
+        start)
+      (goal? [_ state]
+        (= 0 (:remaining state)))
+      (actions [_ state]
+        (actions state))
+      (result [_ state action]
+        (result state action))
+      (step-cost [_ state [todo valve :as action]]
+        (let [{:keys [caves open?] :as new-state} (result state action)
+              unopened-rates (for [c (keys caves) :when (not (open? c))] (rate-of caves c))]
+          (if (empty? unopened-rates)
+            0
+            (case todo
+              :walk
+              (apply + unopened-rates)
+              :open-valve
+              (- (apply + unopened-rates) (rate-of caves valve)))))))))
+
+;(let [{:keys [caves open?] :as new-state} (result state action)
+;      unopened-rates (for [c (keys caves) :when (not (open? c))]
+;                        (rate-of caves c))))
+;  (if (seq unopened-rates)
+;    (dec (apply max unopened-rates))
+;    0))
 
 (defn initial-state [caves]
   {:caves caves
@@ -115,6 +145,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn solve-part1 [caves]
   (:pressure (search (initial-state caves))))
 
+(defn solve-part1* [caves]
+  (:pressure (:state (search-a* (initial-state caves)))))
+
 (defn solve-part2 [caves]
   (:pressure (search (-> (initial-state caves)
                          (assoc :remaining 26)
@@ -124,4 +157,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (result (initial-state caves) [:walk "BB"])
   (actions (assoc (initial-state caves) :me "BB"))
   (time (solve-part1 caves)) ; should be 1651
-  (time (solve-part2 caves))) ; should be 1707
+  (time (solve-part2 caves)) ; should be 1707
+
+  (time (solve-part1* caves)) ; should be 1651
+  (time (solve-part1* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
+
+  (time (search-a* (initial-state caves))))
