@@ -1,5 +1,8 @@
 (ns aoc2022.day16
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [aoc2022.search :as search]))
+
+(set! *warn-on-reflection* true)
 
 (def example "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
 Valve BB has flow rate=13; tunnels lead to valves CC, AA
@@ -29,25 +32,24 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn release-pressure [state]
   (update state :pressure #(+ % (total-rate state))))
 
-(defn player-actions [{:keys [caves open?] :as state} who]
-  (let [pos (state who)]
-    (for [a [:walk :open-valve]
-          c (into [pos] (second (caves pos)))
-          :when (or
-                  (and (= a :open-valve)
-                       (= pos c)                 ; in the valve's cave
-                       (pos? (rate-of caves c))  ; makes sense to open
-                       (nil? (open? c)))         ; not open yet
-                  (and (= a :walk)
-                       (not= c pos)))]
-      [a c])))
+(defn player-actions [{:keys [caves open?] :as state} pos]
+  (for [a [:walk :open-valve]
+        c (into [pos] (second (caves pos)))
+        :when (or
+                (and (= a :open-valve)
+                     (= pos c)                 ; in the valve's cave
+                     (pos? (rate-of caves c))  ; makes sense to open
+                     (nil? (open? c)))         ; not open yet
+                (and (= a :walk)
+                     (not= c pos)))]
+    [a c]))
 
-(defn actions [{:keys [elephant] :as state}]
-  (if-not elephant
-    (for [p (player-actions state :me)]
-      p)
-    (for [[a1 c1 :as p1] (player-actions state :me)
-          [a2 c2 :as p2] (player-actions state :elephant)
+(defn actions [{:keys [positions] :as state}]
+  (if (= (count positions) 1)
+    (for [p (player-actions state (first positions))]
+      [p])
+    (for [[a1 c1 :as p1] (player-actions state (first positions))
+          [a2 c2 :as p2] (player-actions state (second positions))
           :when (if-not (= a1 a2 :open-valve)    ; don't touch the same valve
                   (not= c1 c2)
                   true)]
@@ -55,20 +57,21 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn move [state who [todo valve]]
   (case todo
-    :walk       (assoc state who valve)
+    :walk       (assoc-in state [:positions who] valve)
     :open-valve (update state :open? conj valve)))
 
-(defn result [{:keys [elephant] :as state} action]
-  (if-not elephant
+(defn result [{:keys [positions] :as state} action]
+  (if (= 1 (count positions))
     (-> state
         release-pressure
-        (move :me action)
+        (move 0 (first action))
         (update :remaining dec))
     (-> state
         release-pressure
-        (move :me (first action))
-        (move :elephant (second action))
-        (update :remaining dec))))
+        (move 0 (first action))
+        (move 1 (second action))
+        (update :remaining dec)
+        (update :positions #(vec (sort %))))))
 
 (defn goal? [{:keys [remaining]}]
   (>= 0 remaining))
@@ -95,8 +98,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
         (or (goal? state)
             (worse-than? best state))
-        (recur (into visited [state (-> state (assoc :elephant (state :me)
-                                                     :me (state :elephant)))])
+        (recur (conj visited state)
                (pop stack)
                (max-key utility best state))
 
@@ -117,21 +119,17 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (actions state))
       (result [_ state action]
         (result state action))
-      (step-cost [_ state [[todo1 valve1 :as action1] [todo2 valve2 :as action2]]]
-        (let [{:keys [caves open?] :as new-state} (result state [action1 action2])
+      (step-cost [_ state action]
+        (let [{:keys [caves open?] :as new-state} (result state action)
               unopened-rates (for [c (keys caves) :when (not (open? c))] (rate-of caves c))]
           (if (empty? unopened-rates)
             0
-            (+ (case todo1
-                 :walk
-                 (apply + unopened-rates)
-                 :open-valve
-                 (- (apply + unopened-rates) (rate-of caves valve1)))
-               (case todo2
-                 :walk
-                 (apply + unopened-rates)
-                 :open-valve
-                 (- (apply + unopened-rates) (rate-of caves valve2))))))))))
+            (apply +
+              (map (fn [[todo valve]]
+                     (case todo
+                       :walk       (apply + unopened-rates)
+                       :open-valve (- (apply + unopened-rates) (rate-of caves valve))))
+                   action))))))))
 
 ;(let [{:keys [caves open?] :as new-state} (result state action)
 ;      unopened-rates (for [c (keys caves) :when (not (open? c))]
@@ -142,7 +140,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn initial-state [caves]
   {:caves caves
-   :me "AA"
+   :positions ["AA"]
    :remaining 30
    :pressure 0
    :open? #{}})
@@ -156,16 +154,16 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (defn solve-part2 [caves]
   (:pressure (search (-> (initial-state caves)
                          (assoc :remaining 26)
-                         (assoc :elephant "AA")))))
+                         (update :positions conj "AA")))))
 
 (defn solve-part2* [caves]
-  (:pressure :state (search-a* (-> (initial-state caves)
-                                   (assoc :remaining 26)
-                                   (assoc :elephant "AA")))))
+  (:pressure (:state (search-a* (-> (initial-state caves)
+                                    (assoc :remaining 26)
+                                    (update :positions conj "AA"))))))
 
 (comment
-  (result (initial-state caves) [:walk "BB"])
-  (actions (assoc (initial-state caves) :me "BB"))
+  (result (initial-state caves) [[:walk "BB"]])
+  (actions (assoc (initial-state caves) :positions ["BB"]))
   (time (solve-part1 caves)) ; should be 1651
   (time (solve-part2 caves)) ; should be 1707
 
