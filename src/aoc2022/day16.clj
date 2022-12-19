@@ -117,16 +117,21 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (actions state))
       (result [_ state action]
         (result state action))
-      (step-cost [_ state [todo valve :as action]]
-        (let [{:keys [caves open?] :as new-state} (result state action)
+      (step-cost [_ state [[todo1 valve1 :as action1] [todo2 valve2 :as action2]]]
+        (let [{:keys [caves open?] :as new-state} (result state [action1 action2])
               unopened-rates (for [c (keys caves) :when (not (open? c))] (rate-of caves c))]
           (if (empty? unopened-rates)
             0
-            (case todo
-              :walk
-              (apply + unopened-rates)
-              :open-valve
-              (- (apply + unopened-rates) (rate-of caves valve)))))))))
+            (+ (case todo1
+                 :walk
+                 (apply + unopened-rates)
+                 :open-valve
+                 (- (apply + unopened-rates) (rate-of caves valve1)))
+               (case todo2
+                 :walk
+                 (apply + unopened-rates)
+                 :open-valve
+                 (- (apply + unopened-rates) (rate-of caves valve2))))))))))
 
 ;(let [{:keys [caves open?] :as new-state} (result state action)
 ;      unopened-rates (for [c (keys caves) :when (not (open? c))]
@@ -153,6 +158,11 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                          (assoc :remaining 26)
                          (assoc :elephant "AA")))))
 
+(defn solve-part2* [caves]
+  (:pressure :state (search-a* (-> (initial-state caves)
+                                   (assoc :remaining 26)
+                                   (assoc :elephant "AA")))))
+
 (comment
   (result (initial-state caves) [:walk "BB"])
   (actions (assoc (initial-state caves) :me "BB"))
@@ -160,6 +170,8 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (time (solve-part2 caves)) ; should be 1707
 
   (time (solve-part1* caves)) ; should be 1651
+  (time (solve-part2* caves)) ; should be 1707
   (time (solve-part1* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
+  (time (solve-part2* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
 
   (time (search-a* (initial-state caves))))
