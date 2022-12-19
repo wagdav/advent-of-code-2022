@@ -33,7 +33,6 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (update state :pressure #(+ % (total-rate state))))
 
 (defn player-actions [{:keys [caves open?] :as state} pos]
-  (assert pos)
   (for [a [:walk :open-valve]
         c (into [pos] (second (caves pos)))
         :when (or
@@ -46,6 +45,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
     [a c]))
 
 (defn actions [{:keys [positions] :as state}]
+  (assert positions state)
   (if (= (count positions) 1)
     (for [p (player-actions state (first positions))]
       [p])
@@ -164,7 +164,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
   (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
   (tufte/add-basic-println-handler! {})
 
-  (result (initial-state caves) [[:walk "BB"]])
+  (result (update (initial-state caves) :positions conj "AA") [[:walk "BB"] [:walk "CC"]])
   (actions (assoc (initial-state caves) :positions ["BB"]))
   (time (solve-part1 caves)) ; should be 1651
   (time (solve-part2 caves)) ; should be 1707

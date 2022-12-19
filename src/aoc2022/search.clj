@@ -27,14 +27,14 @@
                       (map->Node {:state start :actions [] :path [start]
                                   :path-cost 0}))]
       (when-let [[state node] (peek frontier)]
-        (if (goal? problem state)
-          node
-          (recur
-            (conj explored state)
-            (into (pop frontier) (for [action (actions problem state)
-                                       :let [c (child-node problem node action)
-                                             s (:state c)]
-                                       :when (not (explored s))] [s c]))))))))
+          (if (goal? problem state)
+            node
+            (recur
+              (conj explored state)
+              (into (pop frontier) (for [action (actions problem state)
+                                         :let [c (child-node problem node action)
+                                               s (:state c)]
+                                         :when (not (explored s))] [s c]))))))))
 
 (defn breadth-first [problem]
   (let [start (initial-state problem)]
