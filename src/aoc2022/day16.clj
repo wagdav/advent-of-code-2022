@@ -24,7 +24,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (def caves (parse-input example))
 
 (defn rate-of [caves valve]
-  (first (caves valve)))
+  (p ::rate-of (first (caves valve))))
 
 (defn total-rate [{:keys [caves open?]}]
   (apply + (for [c open?] (rate-of caves c))))
@@ -121,15 +121,13 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (result state action))
       (step-cost [_ state action]
         (let [{:keys [caves open?] :as new-state} (result state action)
-              unopened-rates (for [c (keys caves) :when (not (open? c))] (rate-of caves c))]
-          (if (empty? unopened-rates)
-            0
-            (apply +
-              (map (fn [[todo valve]]
-                     (case todo
-                       :walk       (apply + unopened-rates)
-                       :open-valve (- (apply + unopened-rates) (rate-of caves valve))))
-                   action))))))))
+              unopened-rates (reduce + (for [c (keys caves) :when (not (open? c))] (rate-of caves c)))]
+          (reduce +
+            (map (fn [[todo valve]]
+                   (case todo
+                     :walk       unopened-rates
+                     :open-valve (- unopened-rates (rate-of caves valve))))
+                 action)))))))
 
 ;(let [{:keys [caves open?] :as new-state} (result state action)
 ;      unopened-rates (for [c (keys caves) :when (not (open? c))]
@@ -162,6 +160,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                                     (update :positions conj "AA"))))))
 
 (comment
+  (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
+  (tufte/add-basic-println-handler! {})
+
   (result (initial-state caves) [[:walk "BB"]])
   (actions (assoc (initial-state caves) :positions ["BB"]))
   (time (solve-part1 caves)) ; should be 1651
@@ -169,7 +170,13 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
   (time (solve-part1* caves)) ; should be 1651
   (time (solve-part2* caves)) ; should be 1707
-  (time (solve-part1* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
+  (profile {}
+    (solve-part1* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
   (time (solve-part2* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
 
-  (time (search-a* (initial-state caves))))
+  (time (search-a* (initial-state caves)))
+
+  (profile
+    {}
+    (dotimes [_ 1000]
+      (p :solve (solve-part2* caves)))))
