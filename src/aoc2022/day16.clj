@@ -24,7 +24,7 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (def caves (parse-input example))
 
 (defn rate-of [caves valve]
-  (p ::rate-of (first (caves valve))))
+  (first (caves valve)))
 
 (defn total-rate [{:keys [caves open?]}]
   (apply + (for [c open?] (rate-of caves c))))
