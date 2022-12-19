@@ -35,7 +35,6 @@
                                        :let [c (child-node problem node action)
                                              s (:state c)]
                                        :when (not (explored s))] [s c]))))))))
-
 (defn breadth-first [problem]
   (let [start (initial-state problem)]
     (loop [explored #{}

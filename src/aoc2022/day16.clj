@@ -155,9 +155,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                          (update :positions conj "AA")))))
 
 (defn solve-part2* [caves]
-  (:pressure (:state (search-a* (-> (initial-state caves)
+  (pressure (:state (search-a* (-> (initial-state caves
                                     (assoc :remaining 26)
-                                    (update :positions conj "AA"))))))
+                                    (update :positions conj "AA")))))))
 
 (comment
   (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
