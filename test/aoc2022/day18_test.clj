@@ -25,4 +25,4 @@
   (testing "with real input"
     (let [input (parse-input (slurp (io/resource "day18.txt")))]
       (is (= 3396 (solve-part1 input)))
-      (is (nil? (solve-part2 input))))))  ; 3252, 2847, 2698 too high
+      (is (= 2044 (solve-part2 input))))))
