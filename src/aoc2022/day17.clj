@@ -58,6 +58,42 @@
           (recur (rest shapes) (rest winds) (into board moved) nil (inc rocks))
           (recur shapes (rest winds) board fallen rocks))))))
 
+(defn top-rows [board]
+  (let [max-y (->> board (map second) (apply max))]
+    (set
+      (for [[x y] board :when (<= (- max-y y) 30)]
+        [x (- max-y y)]))))
+
+(defn game2 [input end]
+  (loop [shapes (cycle shapes)
+         winds (cycle input)
+         board floor
+         shape nil
+         rocks 0
+         sigs {}
+         added 0]
+    (if (= end rocks)
+      (+ (height board) added)
+      (let [wind (first winds)
+            shape (or shape (appear board (first shapes)))
+            moved (apply-wind board shape wind)
+            fallen (fall moved)]
+        (if (collision? board fallen)
+          (let [b (into board moved)
+                s [(first wind) (mod rocks 5) (top-rows b)]]
+            (if-let [[oldt oldy] (sigs s)]
+              (let [dy (- (height b) oldy)
+                    dt (- rocks oldt)
+                    amt (quot (- end rocks) dt)]
+                (recur (rest shapes) (rest winds) (into board moved) nil
+                       (+ (inc rocks) (* amt dt))
+                       sigs
+                       (+ added (* amt dy))))
+              (recur (rest shapes) (rest winds) (into board moved) nil (inc rocks)
+                     (assoc sigs s [rocks (height b)])
+                     added)))
+          (recur shapes (rest winds) board fallen rocks sigs added))))))
+
 (defn viz [board]
   (doseq [row (range (height board))]
     (print row " ")
@@ -67,8 +103,10 @@
         :else (print ".")))
     (println)))
 
+(def trillion 1000000000000)
+
 (defn solve-part1 [input]
   (height (game input 2022)))
 
 (defn solve-part2 [input]
-  #_(height (game input 1000000000000)))
+  (game2 input trillion))
