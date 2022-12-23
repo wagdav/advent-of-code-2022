@@ -3,14 +3,20 @@
             [aoc2022.day23 :refer [parse-input solve-part1 solve-part2]]
             [clojure.java.io :as io]))
 
-(def example-input "")
+(def example "....#..
+..###.#
+#...#.#
+.#...##
+#.###..
+##.#.##
+.#..#..")
 
 (deftest works
-  (testing "with example input")
-    (is (nil? (solve-part1 example-input)))
-    (is (nil? (solve-part2 example-input)))
+  (testing "with example input"
+    (is (= 110 (solve-part1 (parse-input example))))
+    (is (= 20 (solve-part2 (parse-input example)))))
 
-  (testing "with real input")
+  (testing "with real input"
     (let [input (parse-input (slurp (io/resource "day23.txt")))]
-      (is (nil? (solve-part1 input)))
-      (is (nil? (solve-part2 input)))))
+      (is (= 3862 (solve-part1 input)))
+      (is (= 913 (solve-part2 input))))))
