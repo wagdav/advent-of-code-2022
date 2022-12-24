@@ -32,7 +32,7 @@
           nil
 
           (goal? problem state)
-          (dissoc node :state)
+          node
 
           :else
           (recur
