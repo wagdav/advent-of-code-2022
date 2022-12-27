@@ -17,8 +17,7 @@ Blueprint 2:
 
 (deftest works
   (testing "with example input"
-    (is (= 33 (solve-part1 (parse-input example))))
-    (is (nil? (solve-part2 example-input))))
+    (is (= 33 (solve-part1 (parse-input example)))))
 
   (testing "with real input")
   (let [input (parse-input (slurp (io/resource "day19.txt")))]
