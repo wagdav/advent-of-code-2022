@@ -74,6 +74,22 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
         (update :remaining dec)
         (update :positions #(vec (sort %))))))
 
+(def shortest-path
+ (memoize
+   (fn [tunnels start end]
+     (search/uniform-cost
+       (reify search/Problem
+         (initial-state [_]
+           start)
+         (goal? [_ state]
+           (= state end))
+         (actions [_ state]
+           (tunnels state))
+         (result [_ state action]
+           action)
+         (step-cost [_ state action]
+           1))))))
+
 (defn search-a* [start]
   (search/uniform-cost
     (reify search/Problem
@@ -86,17 +102,32 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
       (result [_ state action]
         (result state action))
       (step-cost [_ state action]
-        (let [{:keys [caves open?] :as new-state} (result state action)
-              unopened-rates (reduce + (for [c (keys caves) :when (not (open? c))] (rate-of caves c)))]
-          (apply max
-            (map (fn [[todo valve]]
-                   (case todo
-                     :walk       unopened-rates
-                     :open-valve (- unopened-rates (rate-of caves valve))))
-                 action)))))))
+        (let [{:keys [tunnels caves open? positions] :as new-state} (result state action)
+              unopened (for [c (keys caves) :when (not (open? c))] c)
+              unopened-rates (reduce + (for [c unopened] (rate-of caves c)))
+              f (if (empty? unopened)
+                  0
+                  (let [biggest-unopened (apply max-key #(rate-of caves %) unopened)]
+                    (apply max
+                      (for [p positions]
+                        (:path-cost (shortest-path tunnels p biggest-unopened))))))]
+          (+ 0
+             (apply +
+               (map (fn [[todo valve] p]
+                      (case todo
+                        :walk (if (empty? unopened)
+                                0
+                                (let [biggest-unopened (apply max-key #(rate-of caves %) unopened)]
+                                   #_(+ (rate-of caves biggest-unopened) (:path-cost (shortest-path tunnels p biggest-unopened)))
+                                   (+ unopened-rates (:path-cost (shortest-path tunnels p biggest-unopened)))))
+                        :open-valve (- unopened-rates (rate-of caves valve))))
+                    action
+                    positions))))))))
 
 (defn initial-state [caves]
   {:caves caves
+   :tunnels (into {} (map (fn [[k v]] [k (second v)])) caves)
+   :valves (into {} (map (fn [[k v]] [k (first v)])) caves)
    :positions ["AA"]
    :remaining 30
    :pressure 0
@@ -111,12 +142,14 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
                                     (update :positions conj "AA"))))))
 
 (comment
-  (require '[taoensso.tufte :as tufte :refer (defnp p profiled profile)])
-  (tufte/add-basic-println-handler! {})
+  (shortest-path
+    (:tunnels
+      (initial-state (parse-input example)))
+    "AA" "EE")
 
   (result (update (initial-state caves) :positions conj "AA") [[:walk "BB"] [:walk "CC"]])
   (actions (assoc (initial-state caves) :positions ["BB"]))
   (time (solve-part1 caves)) ; should be 1651
   (time (solve-part2 caves)) ; should be 1707
-  (time (solve-part1* (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
+  (time (solve-part1 (parse-input (slurp (clojure.java.io/resource "day16.txt")))))
   (time (solve-part2 (parse-input (slurp (clojure.java.io/resource "day16.txt"))))))
