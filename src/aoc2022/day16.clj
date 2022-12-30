@@ -102,23 +102,16 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
       (result [_ state action]
         (result state action))
       (step-cost [_ state action]
-        (let [{:keys [remaining tunnels caves open? positions] :as new-state} (result state action)
+        (let [{:keys [remaining tunnels caves open? positions]} state
               unopened (for [c (keys caves) :when (not (open? c))] c)
-              unopened-rates (reduce + (for [c unopened] (rate-of caves c)))
-              f (if (empty? unopened)
-                  0
-                  (let [biggest-unopened (apply max-key #(rate-of caves %) unopened)]
-                    (apply min
-                      (for [p positions]
-                        (:path-cost (shortest-path tunnels p biggest-unopened))))))]
-          (+ (* remaining unopened-rates)
-             (apply max
-               (map (fn [[todo valve] p]
-                      (case todo
-                        :walk unopened-rates
-                        :open-valve (- unopened-rates (rate-of caves valve))))
-                    action
-                    positions))))))))
+              unopened-rates (reduce + (for [c unopened] (rate-of caves c)))]
+           (apply +
+             (map (fn [[todo valve] p]
+                    (case todo
+                      :walk unopened-rates
+                      :open-valve (- unopened-rates (rate-of caves valve))))
+                  action
+                  positions)))))))
 
 (defn initial-state [caves]
   {:caves caves
