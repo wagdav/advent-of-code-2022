@@ -26,6 +26,8 @@
            frontier (priority-map-keyfn :path-cost start
                       (map->Node {:state start :actions [] :path [start]
                                   :path-cost 0}))]
+      (if (zero? (mod (count explored) 10000))
+        (println "Explored" (count explored)))
       (when-let [[state node] (peek frontier)]
         (if (goal? problem state)
           node
