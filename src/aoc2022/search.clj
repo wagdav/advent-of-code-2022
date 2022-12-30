@@ -26,24 +26,15 @@
            frontier (priority-map-keyfn :path-cost start
                       (map->Node {:state start :actions [] :path [start]
                                   :path-cost 0}))]
-      (let [[state node] (peek frontier)]
-        (cond
-          (empty? frontier) ; no solution
-          nil
-
-          (goal? problem state)
+      (when-let [[state node] (peek frontier)]
+        (if (goal? problem state)
           node
-
-          :else
           (recur
             (conj explored state)
-            (reduce
-               (fn [queue n]
-                 (update queue (:state n) (fnil #(min-key :path-cost n %) n)))
-               (pop frontier)
-               (->> (actions problem state)
-                    (map (partial child-node problem node))
-                    (remove #(explored (:state %)))))))))))
+            (into (pop frontier) (for [action (actions problem state)
+                                       :let [c (child-node problem node action)
+                                             s (:state c)]
+                                       :when (not (explored s))] [s c]))))))))
 
 (defn breadth-first [problem]
   (let [start (initial-state problem)]
