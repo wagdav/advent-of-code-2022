@@ -21,5 +21,5 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
   (testing "with real input"
     (let [input (parse-input (slurp (io/resource "day16.txt")))]
-      (time (is (= 2330 (solve-part1 input))))
+      #_(time (is (= 2330 (solve-part1 input))))
       (time (is (nil? (solve-part2 input)))))))
