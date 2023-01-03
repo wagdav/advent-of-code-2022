@@ -22,7 +22,8 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (defn initial-state [input]
   (merge input
-    {:position "AA"
+    {:players 1
+     :position "AA"
      :remaining 30
      :open? #{}}))
 
@@ -38,34 +39,30 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 
 (def total-pressure
   (memoize
-    (fn [{:keys [remaining position tunnels rates open?] :as state}]
+    (fn [{:keys [remaining position tunnels rates open?] :as state} init player]
       (if (zero? remaining)
-        (assoc state :pressure 0)
-        (apply max-key :pressure
+        (if (= player 1)
+          0
+          (total-pressure (assoc (init) :open? open?) init (dec player)))
+        (apply max
           (cond->
             (for [dest (tunnels position)]
-               (total-pressure (walk state dest)))
+               (total-pressure (walk state dest) init player))
 
             ; there's a valve which makes sense to open
             (and (pos? (rates position))
                  (not (open? position)))
             (conj
-              (update
-                (total-pressure (open-valve state position))
-                :pressure
-                #(+ %
-                    (* (dec remaining) (rates position)))))))))))
+              (+
+                (* (dec remaining) (rates position))
+                (total-pressure (open-valve state position) init player)))))))))
 
 (defn solve-part1 [input]
-  (:pressure (total-pressure (initial-state input))))
+  (total-pressure (initial-state input) initial-state 1))
 
 (defn solve-part2 [input]
-  (let [start (assoc (initial-state input) :remaining 26)
-        me (total-pressure start)
-        elephant (total-pressure (assoc start :open? (me :open?)))]
-    (println (me :open?))
-    (+ (me :pressure)
-       (elephant :pressure))))
+  (letfn [(init [] (assoc (initial-state input) :remaining 26))]
+    (total-pressure (assoc (initial-state input) :remaining 26) init 2)))
 
 (comment
    (def ex (parse-input example))

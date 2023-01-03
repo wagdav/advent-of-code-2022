@@ -17,9 +17,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II")
 (deftest works
   (testing "with example input"
     (is (= 1651 (solve-part1 (parse-input example))))
-    #_(is (= 1707 (solve-part2 (parse-input example)))))
+    (is (= 1707 (solve-part2 (parse-input example)))))
 
   (testing "with real input"
     (let [input (parse-input (slurp (io/resource "day16.txt")))]
-      (time (is (= 2330 (solve-part1 input)))
-       #_(time (is (nil? (solve-part2 input))))))))
+      (time (is (= 2330 (solve-part1 input))))
+      (time (is (nil? (solve-part2 input)))))))
