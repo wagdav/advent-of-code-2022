@@ -82,9 +82,9 @@
           (let [b (into board moved)
                 s [(first wind) (mod rocks 5) (top-rows b)]]
             (if-let [[oldt oldy] (sigs s)]
-              (let [dy (- (height b) oldy)
-                    dt (- rocks oldt)
-                    amt (quot (- end rocks) dt)]
+              (let [dy ^long (- (height b) oldy)
+                    dt ^long (- rocks oldt)
+                    amt ^long (quot (- end rocks) dt)]
                 (recur (rest shapes) (rest winds) (into board moved) nil
                        (+ (inc rocks) (* amt dt))
                        sigs
